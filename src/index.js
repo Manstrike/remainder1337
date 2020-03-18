@@ -4,6 +4,7 @@ import { UserRepository } from './repository/UserRepository';
 import { DBConnection } from "./database/DBConnection";
 require('dotenv').config();
 const CronJob = require('cron').CronJob;
+const http = require('http');
 
 const connection = new DBConnection();
 
@@ -155,3 +156,7 @@ async function createJob({frequency, chatId}) {
 
 createJobs();
 
+http.createServer(async(request, response)=>{
+     
+    response.end("Hello world!");
+}).listen(process.env.PORT || 8080);
