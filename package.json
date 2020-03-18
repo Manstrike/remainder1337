@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./lib/index.js",
+    "start": "babel-node ./src/index.js",
     "dev": "./node_modules/.bin/babel src --out-dir lib",
     "watch": "nodemon --exec node ./lib/index.js",
     "test": "nodemon --exec babel-node ./src/index.js"
