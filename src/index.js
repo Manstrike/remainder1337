@@ -26,6 +26,7 @@ async function startHandler (msg) {
     });
     console.log({create});
     bot.sendMessage(chatId, 'You were added to DB. Autoremainder will notificate you every hour. Type /help to learn more');
+    createJobs();
 }
 
 bot.onText(/\/send_every (.+)/, changeFrequency);
@@ -111,7 +112,7 @@ async function helpMessage (msg) {
     const message = [
         '/off - disables auto-notifications',
         '/on - enables auto-notifications',
-        '/set_every [minutes] - set notification frequency',
+        '/send_every [minutes] - set notification frequency',
         '/info'
     ];
 
