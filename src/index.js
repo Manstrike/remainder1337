@@ -70,8 +70,10 @@ async function changeFrequency (msg, match) {
     }
 
     if (currentJobs.length !== 0) {
+        const newJob = await createJob({frequency: match[1], chatId: chatId});
         currentJobs = currentJobs.map(e => {
             if (Number(e.chatId) === Number(chatId)) {
+                e.job = newJob;
                 e.job.start();
             }
     
@@ -121,7 +123,7 @@ async function enableNotifications (msg) {
     });
 
     if (currentJobs.length === 0) {
-        const [ ,user] = userRepo.read({row: 'chatId', value: chatId});
+        const [user, ] = userRepo.read({row: 'chatId', value: chatId});
         const job = await createJob({frequency: user.frequency, chatId: user.chatId});
         job.start();
 
