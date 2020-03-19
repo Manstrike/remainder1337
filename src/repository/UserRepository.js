@@ -39,12 +39,12 @@ export class UserRepository {
                     WHERE 
                         chatId = ${chatId}
                 `);
-
-                return 'Updated.';
             } catch (e) {
                 return `Error: ${e}`;
             }
         }
+
+        return 'Updated.';
     }
 
     async read ({row, value}) {  

@@ -24,9 +24,21 @@ async function startHandler (msg) {
     const create = await userRepo.create({
         chatId, username
     });
-    console.log({create});
     bot.sendMessage(chatId, 'You were added to DB. Autoremainder will notificate you every hour. Type /help to learn more');
-    createJobs();
+
+    if (!currentJobs.some(e => Number(e.chatId) === Number(chatId))) {
+        const job = await createJob({frequency: 60, chatId: chatId});
+        job.start();
+
+        const jobDesc = {
+            chatId :chatId,
+            job,
+        };
+
+        currentJobs.push(jobDesc);
+    }
+
+    console.log({'currentJobs on /start' : currentJobs});
 }
 
 bot.onText(/\/send_every (.+)/, changeFrequency);
@@ -44,6 +56,28 @@ async function changeFrequency (msg, match) {
         frequency: match[1],
         activated: 1
     });
+
+    if (!currentJobs.some(e => Number(e.chatId) === Number(chatId))) {
+        const job = await createJob({frequency: match[1], chatId: chatId});
+        job.start();
+
+        const jobDesc = {
+            chatId :chatId,
+            job,
+        };
+
+        currentJobs.push(jobDesc);
+    }
+
+    if (currentJobs.length !== 0) {
+        currentJobs = currentJobs.map(e => {
+            if (Number(e.chatId) === Number(chatId)) {
+                e.job.start();
+            }
+    
+            return e;
+        });
+    }
     
     bot.sendMessage(chatId, changed);
 }
@@ -67,9 +101,8 @@ async function disableNotifications (msg) {
     
             return e;
         });
-    } else {
-        createJobs();
     }
+
 
     console.log('after disable ', currentJobs);
 
@@ -88,7 +121,16 @@ async function enableNotifications (msg) {
     });
 
     if (currentJobs.length === 0) {
-        createJobs();
+        const [ ,user] = userRepo.read({row: 'chatId', value: chatId});
+        const job = await createJob({frequency: user.frequency, chatId: user.chatId});
+        job.start();
+
+        const jobDesc = {
+            chatId: user.chatId,
+            job,
+        };
+
+        currentJobs.push(jobDesc);
     } else {
         currentJobs = currentJobs.map(e => {
             if (Number(e.chatId) === Number(chatId)) {
@@ -148,6 +190,7 @@ async function getName ({origin}) {
 }
 
 async function createJobs () {
+    currentJobs = [];
     const userRepo = new UserRepository({connection});
     const [users, ] = await userRepo.read({row: 'activated', value: 1});
 
@@ -184,6 +227,7 @@ async function createMainWatcher () {
     job.start();
     
     createJobs();
+    console.log('initial jobs', currentJobs);
 }
 
 createMainWatcher();
