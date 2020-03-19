@@ -25,16 +25,7 @@ async function startHandler (msg) {
         chatId, username
     });
     console.log({create});
-}
-
-async function getName ({origin}) {
-    let username = origin.first_name;
-
-    if (origin.last_name) {
-        username += ' ' + origin.last_name;
-    }
-
-    return username;
+    bot.sendMessage(chatId, 'You were added to DB. Autoremainder will notificate you every hour. Type /help to learn more');
 }
 
 bot.onText(/\/send_every (.+)/, changeFrequency);
@@ -112,6 +103,29 @@ async function enableNotifications (msg) {
     bot.sendMessage(chatId, enabled);
 }
 
+bot.onText(/\/help/, helpMessage);
+
+async function helpMessage (msg) {
+    const chatId = msg.chat.id;
+
+    const message = [
+        '/off - disables auto-notifications',
+        '/on - enables auto-notifications',
+        '/set_every [minutes] - set notification frequency',
+        '/info'
+    ];
+
+    bot.sendMessage(chatId, message.join('\n'));
+}
+
+bot.onText(/\/info/, infoMessage);
+
+async function infoMessage (msg) {
+    const chatId = msg.chat.id;
+
+    bot.sendMessage(chatId, 'Бот для забывчивой зайки');
+}
+
 bot.on("polling_error", (err) => console.log(err));
 
 function sendNotification (chatId) {
@@ -122,8 +136,14 @@ function sendNotification (chatId) {
     
 }
 
-function jobIsActive (chatId) {
-    return currentJobs.some(e => e.chatId === chatId && e.activate === true);
+async function getName ({origin}) {
+    let username = origin.first_name;
+
+    if (origin.last_name) {
+        username += ' ' + origin.last_name;
+    }
+
+    return username;
 }
 
 async function createJobs () {
@@ -144,7 +164,7 @@ async function createJobs () {
 }
 
 async function createJob({frequency, chatId}) {
-    const cronTimer = `*/${frequency} 0-21 * * *`;
+    const cronTimer = `*/${frequency} 9-21 * * *`;
     const cb = await sendNotification(chatId);
     try {
         return new CronJob(cronTimer, cb);
@@ -154,7 +174,18 @@ async function createJob({frequency, chatId}) {
 
 }
 
-createJobs();
+async function createMainWatcher () {
+    const cronTimer = `*/60 23 * * *`;
+    
+    const job = new CronJob(cronTimer, () => {
+        createJobs();
+    });
+    job.start();
+    
+    createJobs();
+}
+
+createMainWatcher();
 
 http.createServer(async(request, response)=>{
      
